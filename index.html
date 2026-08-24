@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>링크 정리 도구</title>
+  <meta name="description" content="Agoda, Trip.com, Coupang, AliExpress, 오늘의집, T Station 링크 정리 도구" />
+  <style>
+    :root {
+      --bg: #f6f7f4;
+      --panel: #ffffff;
+      --ink: #171b19;
+      --muted: #66706b;
+      --line: #d9dfd8;
+      --green: #1f7a4f;
+      --green-dark: #155b3b;
+      --blue: #2e6f9e;
+      --amber: #a15f13;
+      --shadow: 0 18px 48px rgb(29 43 36 / 10%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, textarea { font: inherit; }
+    button { border: 0; }
+
+    .app-shell { min-height: 100vh; padding: 18px; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      max-width: 1480px;
+      margin: 0 auto 14px;
+      padding: 12px 0;
+    }
+
+    .brand-block { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid #b7c9b9;
+      border-radius: 8px;
+      background: #e5f1e8;
+      color: var(--green-dark);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .eyebrow, .section-kicker {
+      margin: 0 0 3px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1, h2, p { margin: 0; }
+    h1 { font-size: clamp(22px, 3vw, 34px); line-height: 1.1; letter-spacing: 0; }
+    h2 { font-size: 18px; line-height: 1.2; letter-spacing: 0; }
+
+    .summary-strip { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; color: #33423a; }
+    .summary-strip span {
+      min-height: 32px;
+      padding: 7px 10px;
+      border: 1px solid #c9d4ca;
+      border-radius: 8px;
+      background: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.94fr) minmax(420px, 1.2fr) minmax(230px, 0.5fr);
+      gap: 14px;
+      max-width: 1480px;
+      margin: 0 auto;
+      align-items: start;
+    }
+
+    .input-pane, .output-pane, .rules-pane {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .input-pane, .output-pane, .rules-pane { padding: 16px; }
+    .rules-pane { background: #fbfcf8; }
+
+    .pane-heading {
+      display: flex;
+      min-height: 42px;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 420px;
+      resize: vertical;
+      border: 1px solid #cdd5ce;
+      border-radius: 8px;
+      outline: none;
+      background: #fbfcfa;
+      color: #17201b;
+      padding: 13px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, ui-monospace, monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      word-break: break-all;
+    }
+
+    textarea:focus { border-color: #8ab598; box-shadow: 0 0 0 3px rgb(31 122 79 / 13%); }
+
+    .example-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+
+    .sample-button, .ghost-button, .primary-button, .copy-button {
+      min-height: 38px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+    }
+
+    .sample-button, .ghost-button, .copy-button {
+      border: 1px solid #cbd6cc;
+      background: #f8faf7;
+      color: #233329;
+    }
+
+    .primary-button { min-width: 92px; padding: 0 13px; background: var(--green); color: #ffffff; }
+    .primary-button:disabled { cursor: not-allowed; background: #9bb4a6; }
+    .sample-button:hover, .ghost-button:hover, .copy-button:hover, .primary-button:hover:not(:disabled) { transform: translateY(-1px); }
+    .sample-button:focus-visible, .ghost-button:focus-visible, .copy-button:focus-visible, .primary-button:focus-visible { outline: 3px solid rgb(46 111 158 / 25%); outline-offset: 2px; }
+
+    .result-list { display: grid; gap: 10px; max-height: calc(100vh - 150px); overflow: auto; padding-right: 4px; }
+
+    .result-card { display: grid; gap: 10px; border: 1px solid #d9dfd8; border-radius: 8px; background: #fbfcfa; padding: 13px; }
+    .result-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+
+    .platform-pill, .status-pill {
+      display: inline-flex;
+      min-height: 26px;
+      align-items: center;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .platform-pill { background: #e7f0e9; color: var(--green-dark); }
+    .status-pill { background: #edf3f7; color: var(--blue); }
+    .status-pill.changed { background: #fff1dd; color: var(--amber); }
+
+    .clean-url {
+      overflow-wrap: anywhere;
+      border-radius: 8px;
+      background: #101714;
+      color: #e7f4eb;
+      padding: 11px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, ui-monospace, monospace;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .param-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .param-grid > div { min-width: 0; border: 1px solid #dde4dd; border-radius: 8px; background: #ffffff; padding: 9px; }
+    .param-label { display: block; margin-bottom: 5px; color: var(--muted); font-size: 11px; font-weight: 800; }
+    .param-grid p { color: #29332e; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
+    .copy-button { justify-self: end; padding: 0 12px; }
+
+    .empty-state { display: grid; min-height: 180px; place-items: center; border: 1px dashed #cbd6cc; border-radius: 8px; color: var(--muted); font-weight: 800; }
+
+    .rules-pane h2 { margin-bottom: 12px; }
+    .rules-pane ul { display: grid; gap: 8px; padding: 0; margin: 0; list-style: none; }
+    .rules-pane li { display: grid; gap: 4px; min-height: 54px; border: 1px solid #dbe2db; border-radius: 8px; background: #ffffff; padding: 10px; }
+    .rules-pane strong { font-size: 13px; }
+    .rules-pane span { color: var(--muted); font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, ui-monospace, monospace; font-size: 12px; overflow-wrap: anywhere; }
+
+    @media (max-width: 1140px) {
+      .workspace { grid-template-columns: minmax(320px, 1fr) minmax(360px, 1fr); }
+      .rules-pane { grid-column: 1 / -1; }
+      .rules-pane ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      .app-shell { padding: 12px; }
+      .topbar, .workspace { grid-template-columns: 1fr; }
+      .topbar { align-items: stretch; }
+      .summary-strip { justify-content: start; }
+      .example-row, .param-grid, .rules-pane ul { grid-template-columns: 1fr; }
+      textarea { min-height: 290px; }
+      .result-list { max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <span class="brand-mark" aria-hidden="true">LC</span>
+        <div>
+          <p class="eyebrow">Affiliate Link Cleaner</p>
+          <h1>링크 정리 도구</h1>
+        </div>
+      </div>
+      <div class="summary-strip" aria-label="정리 요약">
+        <span id="count-links">0개 링크</span>
+        <span id="count-changed">0개 정리</span>
+        <span id="count-removed">0개 제거값</span>
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="링크 정리 작업 영역">
+      <section class="input-pane" aria-labelledby="input-title">
+        <div class="pane-heading">
+          <div>
+            <p class="section-kicker">Input</p>
+            <h2 id="input-title">원본 링크</h2>
+          </div>
+          <button class="ghost-button" type="button" id="clear-button">비우기</button>
+        </div>
+        <textarea id="input" spellcheck="false" aria-label="정리할 원본 링크"></textarea>
+        <div class="example-row" aria-label="샘플 링크" id="examples"></div>
+      </section>
+
+      <section class="output-pane" aria-labelledby="output-title">
+        <div class="pane-heading">
+          <div>
+            <p class="section-kicker">Output</p>
+            <h2 id="output-title">정리 결과</h2>
+          </div>
+          <button class="primary-button" type="button" id="copy-all">전체 복사</button>
+        </div>
+        <div class="result-list" id="results"></div>
+      </section>
+
+      <aside class="rules-pane" aria-labelledby="rules-title">
+        <p class="section-kicker">Rules</p>
+        <h2 id="rules-title">지원 플랫폼</h2>
+        <ul>
+          <li><strong>Trip.com</strong><span>checkin, checkout, adult</span></li>
+          <li><strong>Coupang</strong><span>vendorItemId, lptag</span></li>
+          <li><strong>AliExpress</strong><span>item URL, aff_trace_key</span></li>
+          <li><strong>오늘의집</strong><span>goods path</span></li>
+          <li><strong>T Station</strong><span>goodsNo, sizeCd</span></li>
+          <li><strong>Agoda</strong><span>cid, tag, date values</span></li>
+        </ul>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const examples = [
+      { label: 'Trip.com', value: 'https://kr.trip.com/hotels/busan-hotel-detail-64962715/busan-yeongmu-parade-hotel-haeundae-beach/?checkin=2026-08-29&city=253&module=list&link=button&from_page=list&adult=1&checkout=2026-08-30' },
+      { label: 'Coupang', value: 'https://www.coupang.com/vp/products/8597899327?vendorItemId=92196080156&sourceType=HOME_GW_PROMOTION&searchId=feed-d1e1e81274c24e63b85be8634b7612c7-3.33.107%3Agw_promotion' },
+      { label: 'AliExpress', value: 'https://www.aliexpress.com/ssr/300001995/N3KsYt2f3a?spm=a2g0o.best.3fornn.1.2437423akypdKz&disableNav=YES&pha_manifest=ssr&_immersiveMode=true&_gl=1*zju396*_gcl_au*MTE2NTI4NjAyMi4xNzg3NDEyODQx*_ga*MTI2Mjk3Mzk1LjE3ODc0MTI4NDI.*_ga_VED1YSGNC7*czE3ODc0MTI4NDEkbzEkZzAkdDE3ODc0MTI4NDEkajYwJGwwJGgw&productIds=1005008976362329' },
+      { label: '오늘의집', value: 'https://store.ohou.se/goods/2518275?affect_id=0&affect_type=CategoryMDpicks' },
+      { label: 'T Station', value: 'https://www.tstation.com/tire/product/HK_p_a_ventus_s2_as?goodsNo=G000000318343&sizeCd=2255517&carEncry=null' }
+    ];
+
+    const platformKeepKeys = {
+      Agoda: ['adult', 'adults', 'checkin', 'checkout', 'cid', 'currencycode', 'los', 'pcs', 'rooms', 'tag'],
+      'Trip.com': ['adult', 'adults', 'checkin', 'checkout', 'children', 'rooms'],
+      Coupang: ['itemid', 'lptag', 'productid', 'subid', 'vendoritemid'],
+      AliExpress: ['aff_fcid', 'aff_fsk', 'aff_platform', 'aff_short_key', 'aff_trace_key', 'dp', 'productids', 'sk', 'terminal_id'],
+      Ohouse: ['aff_id', 'affiliate_id', 'campaign_id', 'partner_id'],
+      'T Station': ['goodsno', 'sizecd'],
+      Generic: []
+    };
+
+    const platformRemoveKeys = {
+      Agoda: ['adults', 'childrenages', 'ds', 'finalpriceview', 'selectedproperty'],
+      'Trip.com': ['city', 'from_page', 'link', 'module'],
+      Coupang: ['searchid', 'sourcetype', 'src', 'traid'],
+      AliExpress: ['_gl', '_immersivemode', 'disablenav', 'pha_manifest', 'spm'],
+      Ohouse: ['affect_id', 'affect_type'],
+      'T Station': [],
+      Generic: []
+    };
+
+    const hardRemoveKeys = new Set(['_gl', '_immersivemode', 'affect_id', 'affect_type', 'disable_nav', 'disablenav', 'fbclid', 'from_page', 'gbraid', 'gclid', 'igshid', 'link', 'mc_cid', 'mc_eid', 'module', 'msclkid', 'pha_manifest', 'searchid', 'source', 'sourcetype', 'spm', 'wbraid', 'yclid']);
+
+    const input = document.querySelector('#input');
+    const resultsNode = document.querySelector('#results');
+    const copyAll = document.querySelector('#copy-all');
+    const clearButton = document.querySelector('#clear-button');
+    const examplesNode = document.querySelector('#examples');
+
+    input.value = examples.map((example) => example.value).join('\n');
+
+    examples.forEach((example) => {
+      const button = document.createElement('button');
+      button.className = 'sample-button';
+      button.type = 'button';
+      button.textContent = example.label;
+      button.addEventListener('click', () => {
+        input.value = example.value;
+        render();
+      });
+      examplesNode.append(button);
+    });
+
+    function detectPlatform(hostname) {
+      const host = hostname.toLowerCase();
+      if (host.includes('agoda.')) return 'Agoda';
+      if (host.includes('trip.com')) return 'Trip.com';
+      if (host.includes('coupang.com')) return 'Coupang';
+      if (host.includes('aliexpress.')) return 'AliExpress';
+      if (host.includes('ohou.se')) return 'Ohouse';
+      if (host.includes('tstation.com')) return 'T Station';
+      return 'Generic';
+    }
+
+    function normalizeRawUrl(raw) {
+      return raw.replace(/\\([_&])/g, '$1').replace(/&amp;/g, '&').replace(/[)\].,;]+$/g, '').trim();
+    }
+
+    function extractUrls(text) {
+      const matches = text.match(/https?:\/\/[^\s<>"']+/g);
+      if (!matches?.length && text.trim()) return [text.trim()];
+      return matches?.map(normalizeRawUrl) || [];
+    }
+
+    function unique(values) {
+      return [...new Set(values.filter(Boolean))];
+    }
+
+    function isEmptyValue(value) {
+      const normalized = value.trim().toLowerCase();
+      return normalized === '' || normalized === 'null' || normalized === 'undefined' || normalized === 'none';
+    }
+
+    function isAffiliateKey(key) {
+      return key.startsWith('aff_') || key.startsWith('affiliate') || key.includes('partner') || key === 'lptag' || key === 'subid';
+    }
+
+    function isTrackingKey(key) {
+      return hardRemoveKeys.has(key) || key.startsWith('utm_') || key.startsWith('_ga') || key.startsWith('ga_') || key.startsWith('yclid');
+    }
+
+    function getAliExpressProductId(url) {
+      const fromQuery = url.searchParams.get('productIds') || url.searchParams.get('productId');
+      const fromPath = url.pathname.match(/(?:item|product)\/(\d+)\.html/i)?.[1];
+      return fromQuery || fromPath || null;
+    }
+
+    function shouldKeepParam(platform, key, value) {
+      const lowerKey = key.toLowerCase();
+      if (isEmptyValue(value)) return false;
+      if (platformKeepKeys[platform].includes(lowerKey)) return true;
+      if (isAffiliateKey(lowerKey)) return true;
+      if (platformRemoveKeys[platform].includes(lowerKey)) return false;
+      if (isTrackingKey(lowerKey)) return false;
+      return platform === 'Generic' || !hardRemoveKeys.has(lowerKey);
+    }
+
+    function cleanOne(rawUrl, index) {
+      try {
+        const originalUrl = new URL(normalizeRawUrl(rawUrl));
+        const platform = detectPlatform(originalUrl.hostname);
+        const cleanedUrl = new URL(originalUrl.toString());
+        const preserved = [];
+        const removed = [];
+        const nextParams = new URLSearchParams();
+        cleanedUrl.search = '';
+
+        if (platform === 'AliExpress') {
+          const productId = getAliExpressProductId(originalUrl);
+          if (productId) {
+            cleanedUrl.hostname = 'www.aliexpress.com';
+            cleanedUrl.pathname = `/item/${productId}.html`;
+          }
+        }
+
+        originalUrl.searchParams.forEach((value, key) => {
+          const lowerKey = key.toLowerCase();
+          const isAliProductId = platform === 'AliExpress' && lowerKey === 'productids' && getAliExpressProductId(originalUrl);
+          if (isAliProductId) {
+            removed.push(key);
+            return;
+          }
+          if (shouldKeepParam(platform, key, value)) {
+            nextParams.append(key, value);
+            preserved.push(key);
+          } else {
+            removed.push(key);
+          }
+        });
+
+        const query = nextParams.toString();
+        cleanedUrl.search = query ? `?${query}` : '';
+        cleanedUrl.hash = '';
+        const cleaned = cleanedUrl.toString();
+        return { id: `${index}-${cleaned}`, original: originalUrl.toString(), cleaned, platform, preserved: unique(preserved), removed: unique(removed), changed: cleaned !== originalUrl.toString(), note: cleaned !== originalUrl.toString() ? '정리됨' : '그대로 사용 가능' };
+      } catch {
+        return { id: `${index}-error`, original: rawUrl, cleaned: rawUrl, platform: 'Generic', preserved: [], removed: [], changed: false, note: '확인 필요', error: 'URL 형식이 맞지 않습니다.' };
+      }
+    }
+
+    function cleanLinks(text) {
+      return extractUrls(text).map(cleanOne);
+    }
+
+    async function copyText(value, button) {
+      await navigator.clipboard.writeText(value);
+      const original = button.textContent;
+      button.textContent = '복사됨';
+      setTimeout(() => { button.textContent = original; }, 1400);
+    }
+
+    function render() {
+      const results = cleanLinks(input.value);
+      const cleanText = results.map((result) => result.cleaned).join('\n');
+      const changedCount = results.filter((result) => result.changed).length;
+      const removedCount = results.reduce((total, result) => total + result.removed.length, 0);
+      document.querySelector('#count-links').textContent = `${results.length}개 링크`;
+      document.querySelector('#count-changed').textContent = `${changedCount}개 정리`;
+      document.querySelector('#count-removed').textContent = `${removedCount}개 제거값`;
+      copyAll.disabled = results.length === 0;
+      resultsNode.replaceChildren();
+
+      if (!results.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = '링크 없음';
+        resultsNode.append(empty);
+        return;
+      }
+
+      results.forEach((result) => {
+        const card = document.createElement('article');
+        card.className = 'result-card';
+        const statusClass = result.changed ? 'status-pill changed' : 'status-pill';
+        card.innerHTML = `
+          <div class="result-meta">
+            <span class="platform-pill"></span>
+            <span class="${statusClass}"></span>
+          </div>
+          <p class="clean-url"></p>
+          <div class="param-grid">
+            <div><span class="param-label">보존</span><p class="preserved"></p></div>
+            <div><span class="param-label">제거</span><p class="removed"></p></div>
+          </div>
+        `;
+        card.querySelector('.platform-pill').textContent = result.platform;
+        card.querySelector('.status-pill').textContent = result.error || result.note;
+        card.querySelector('.clean-url').textContent = result.cleaned;
+        card.querySelector('.preserved').textContent = result.preserved.length ? result.preserved.join(', ') : '없음';
+        card.querySelector('.removed').textContent = result.removed.length ? result.removed.join(', ') : '없음';
+        const copyButton = document.createElement('button');
+        copyButton.className = 'copy-button';
+        copyButton.type = 'button';
+        copyButton.textContent = '이 링크 복사';
+        copyButton.addEventListener('click', () => copyText(result.cleaned, copyButton));
+        card.append(copyButton);
+        resultsNode.append(card);
+      });
+
+      copyAll.onclick = () => copyText(cleanText, copyAll);
+    }
+
+    input.addEventListener('input', render);
+    clearButton.addEventListener('click', () => {
+      input.value = '';
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>
