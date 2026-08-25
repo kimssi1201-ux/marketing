@@ -1,5 +1,8 @@
-# Marketing Link Cleaner
+# 제휴 링크 변환기
 
-A browser-only affiliate link cleaner for travel and shopping URLs.
+회원가입 없는 BYOK 방식의 멀티 제휴사 링크 변환 도구입니다.
 
-Supported examples include Agoda, Trip.com, Coupang, AliExpress, Ohouse, and T Station. The cleaner keeps affiliate or product-identifying parameters when known and removes common tracking parameters such as `utm_*`, `spm`, `fbclid`, `gclid`, and empty values.
+- API 키는 브라우저 localStorage에만 저장합니다.
+- Cloudflare Pages Functions는 변환 요청 때 키를 받아 공식 제휴사 API 서명에만 사용하고 저장하지 않습니다.
+- 키가 없어도 추적 파라미터 제거와 링크 유효성 검사를 사용할 수 있습니다.
+- 초기 변환 대상은 쿠팡파트너스이며, 알리익스프레스/마이리얼트립/텐핑은 정리 기능과 가이드부터 제공합니다.
